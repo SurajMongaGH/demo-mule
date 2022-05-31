@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="78c70eca-ac86-424c-bcf8-75b0610d3608" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="c2b5ad0d-8a18-44a3-9209-3a18e59ef88e" >
+		<db:my-sql-connection host="sql6.freesqldatabase.com" port="3306" user="sql6494541" password="LRFuG8HFns" database="sql6494541" />
+	</db:config>
+	<ftp:config name="FTP_Config" doc:name="FTP Config" doc:id="05b6f878-03b0-4daa-b2ed-f7d884a30024" >
+		<ftp:connection workingDir="\cabs" host="66.220.9.50" username="SUSHANT_R" password="C6h12o6@1" />
+	</ftp:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="4431dd49-d7fd-486c-b196-ff7a947ae408" />
+	<flow name="db_connectionFlow" doc:id="a52ef6fb-a398-4d85-9c37-3941317140ea" >
+		<http:listener doc:name="Listener" doc:id="df06f5cb-64f1-4617-840b-40831d009ea9" config-ref="HTTP_Listener_config" path="/get-records">
+		</http:listener>
+		<ee:transform doc:name="Transform Message" doc:id="5656c5f5-890d-4654-ad0a-1168559da80f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"time":now() as String {format: "y-MM-dd hh:m:s"},
+	
+	}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="db_connectionFlow1" doc:id="c7325522-c822-46c6-838e-362b5877f922" >
+		<http:listener doc:name="Listener" doc:id="ec732576-c1f6-4ff4-afb0-bebbd4b8f428" config-ref="HTTP_Listener_config" path="/insert"/>
+		<db:insert doc:name="Insert" doc:id="7092dd58-62ac-47bc-b31c-2d3f622354b8" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into flights values(:flight_id ,
+ :flight_name,
+ :Source,
+ :Destination, 
+ :Date  ,
+ :No_of_vacant_seats,
+ :Total_seats)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+		<set-payload value='{"message":"row inserted"}' doc:name="Set Payload" doc:id="45e09c37-cbb4-4b20-9c29-a03928e55664" />
+	</flow>
+	<flow name="Copy_of_db_connectionFlow" doc:id="8a35a816-dd09-4ba7-b42d-38249f611ce7" >
+		<http:listener doc:name="Copy_of_Listener" doc:id="8aafcf9f-e0b3-4567-9669-bbdf06f9616d" config-ref="HTTP_Listener_config" path="/bulk-insert" />
+		<db:bulk-insert doc:name="Bulk insert" doc:id="43593860-53b0-4ec8-a878-404e0506e7b6" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into flights values(:flight_id ,
+ :flight_name,
+ :Source,
+ :Destination, 
+ :Date  ,
+ :No_of_vacant_seats,
+ :Total_seats)]]></db:sql>
+		</db:bulk-insert>
+		<set-payload value='{"message":"rows  inserted"}' doc:name="Copy_of_Set Payload" doc:id="dedf1562-fb32-4e50-bb67-6c4f52496a77" />
+	</flow>
+	<flow name="db_connectionFlow2" doc:id="2e74d128-a2ea-4903-8371-1565c2ae4240" >
+		<ee:transform doc:name="Transform Message" doc:id="2989e435-7361-4c34-bc13-37721b778e09" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message" : "file uploaded"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="db_connectionFlow3" doc:id="75b91fef-a6b9-408a-b3cc-51c0d05bd124" >
+		<http:listener doc:name="Listener" doc:id="f58837cf-5f4f-4377-ac66-c9b849b51028" config-ref="HTTP_Listener_config" path="/test"/>
+		<ftp:write doc:name="Write" doc:id="458a79a9-e72b-48e3-b7f1-7c33c8ee4d15" config-ref="FTP_Config" path="abc.csv" mode="APPEND">
+			<ftp:content ><![CDATA[#[output application/csv header=false
+---
+payload]]]></ftp:content>
+		</ftp:write>
+	</flow>
+</mule>
