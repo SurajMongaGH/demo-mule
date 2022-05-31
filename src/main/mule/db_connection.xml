@@ -28,7 +28,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 output application/json
 ---
 {
-	"time":now() as String {format: "y-MM-dd hh:m:s"},
+	"message":"HELLO !!! :-) "
 	
 	}]]></ee:set-payload>
 			</ee:message>
